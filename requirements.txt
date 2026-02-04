@@ -12,3 +12,4 @@ torch
 torchvision
 pyyaml
 matplotlib
+gdown
