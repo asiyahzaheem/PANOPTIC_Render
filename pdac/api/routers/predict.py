@@ -12,18 +12,37 @@ from pdac.api.services.ctEmbedder import extract_ct_embedding_single
 from pdac.api.services.predictorService import PredictorService
 from pdac.api.schemas.predict import PredictResponse
 from pdac.api.services.molParser import load_molecular_embedding_from_uploaded_tsv
+from fastapi import APIRouter
+from pathlib import Path
+import os
+import threading
 
 router = APIRouter()
 
-_cfg = get_cfg()
 _upload_dir = Path(os.getenv("UPLOAD_DIR", "/tmp/panoptic_uploads"))
 _upload_dir.mkdir(parents=True, exist_ok=True)
 
-_predictor = PredictorService(
-    fusion_graph_pt=fusion_graph_path(_cfg),
-    model_pt=model_ckpt_path(_cfg),
-    cfg=_cfg,
-)
+_predictor = None
+_cfg = None
+_lock = threading.Lock()
+
+def get_predictor() -> PredictorService:
+    global _predictor, _cfg
+    if _predictor is not None:
+        return _predictor
+
+    with _lock:
+        if _predictor is None:
+            if _cfg is None:
+                _cfg = get_cfg()
+            _predictor = PredictorService(
+                fusion_graph_pt=fusion_graph_path(_cfg),
+                model_pt=model_ckpt_path(_cfg),
+                cfg=_cfg,
+            )
+    return _predictor
+
+
 
 @router.options("/predict")
 def predict_options():
