@@ -1,19 +1,13 @@
 data:
-  # In Render, the repo is checked out into the working directory.
-  # So keep paths relative.
   project_root: "."
-  artifacts_dir: "artifacts"
-  models_dir: "models"
-
-  # --- Runtime uploads (ephemeral) ---
-  # Render/container files should go to /tmp
+  artifacts_dir: "."      # because fusion_graph.pt etc are at repo root
+  models_dir: "."         # because gnn_best.pt is at repo root
   upload_dir: "/tmp/panoptic_uploads"
 
-  # --- Artifacts needed for inference ---
-  fusion_graph_pt: "fusion_graph.pt"                 # stored inside artifacts_dir
-  gnn_model_ckpt: "gnn_best.pt"                      # stored inside models_dir
+  fusion_graph_pt: "fusion_graph.pt"
+  gnn_model_ckpt: "gnn_best.pt"
 
-  molecular_embedder_ckpt: "molecular_embedder.pt"   # stored inside artifacts_dir (or models_dir, your choice)
+  molecular_embedder_ckpt: "molecular_embedder.pt"          # will be downloaded to repo root (.)
   molecular_feature_cols_txt: "molecular_feature_cols.txt"
 
 preprocess:
