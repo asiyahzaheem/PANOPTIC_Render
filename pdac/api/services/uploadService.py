@@ -10,9 +10,16 @@ def ensure_dir(p: Path) -> Path:
 
 def save_upload(upload_dir: Path, f: UploadFile) -> Path:
     ensure_dir(upload_dir)
-    suffix = "".join(Path(f.filename).suffixes)  # handles .nii.gz
+    suffix = "".join(Path(f.filename).suffixes)
     out = upload_dir / f"{uuid.uuid4().hex}{suffix}"
+
     with out.open("wb") as w:
-        w.write(f.file.read())
+        while True:
+            chunk = f.file.read(8192)
+            if not chunk:
+                break
+            w.write(chunk)
+
     return out
+
 
