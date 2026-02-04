@@ -2,7 +2,8 @@ from pathlib import Path
 import yaml
 
 def get_cfg():
-    cfg_path = Path("config.yaml")  # repo root
+    repo_root = Path(__file__).resolve().parents[3]  
+    cfg_path = repo_root / "config.yaml"
     return yaml.safe_load(cfg_path.read_text())
 
 def project_root(cfg) -> Path:
