@@ -1,0 +1,71 @@
+data:
+  # Force project root (avoids loading from wrong copy e.g. Documents/PANOPCTIC_v1)
+  project_root: "/Users/asiyah/PANOPTIC"
+  base_dir: "/Volumes/ugly/PANOPTIC_DATA"
+
+  # INPUT
+  cptac_dicom_dir: "/Volumes/ugly/PANOPTIC_DATA/CPTAC-PDA"
+  rnaseq_cct_dir: "/Volumes/ugly/PANOPTIC_DATA/cptac_rnaseq/RNAseq_Tumor.cct"
+
+
+  # OUTPUTS
+  rnaseq_per_patient_tsv_dir: "/Volumes/ugly/PANOPTIC_DATA/cptac_rnaseq/per_patient_tsv"
+
+  cptac_nifti_dir: "/Volumes/ugly/PANOPTIC_DATA/cptac_nifti"
+  artifacts_dir: "artifacts"   # relative to project root (PANOPTIC/)
+
+  imaging_index_csv: "imaging_index.csv"
+  imaging_qc_log_csv: "imaging_qc_log.csv"
+  imaging_embeddings_csv: "imaging_embeddings.csv"
+  imaging_embeddings_pt: "imaging_embeddings.pt"
+
+  molecular_index_csv: "molecular_index.csv"
+  molecular_labels_csv: "molecular_labels.csv"
+  molecular_embeddings_csv: "molecular_embeddings.csv"
+  molecular_embeddings_pt: "molecular_embeddings.pt"
+
+  molecular_gnn_pt: "molecular_gnn.pt"
+  molecular_gnn_index_csv: "molecular_gnn_index.csv"
+
+  fusion_graph_pt: "fusion_graph.pt"
+  models_dir: "models"
+  gnn_models_dir: "models"
+
+  molecular_embedder_ckpt: "molecular_embedder.pt"      
+  molecular_feature_cols_txt: "molecular_feature_cols.txt"  
+
+preprocess:
+  hu_min: -150
+  hu_max: 250
+  k_slices: 8
+  slice_pool: 24
+  patch_resize: 256
+  patch_crop: 224
+
+embeddings:
+  batch_size: 4
+  num_workers: 0
+
+molecular:
+  embedding_dim: 256
+  hidden_dim: 1024
+
+gnn:
+  num_classes: 4
+  knn_k: 10
+  knn_metric: "cosine"    
+  hidden_dim: 128
+  dropout: 0.5 
+  temperature: 1.5   # softmax temperature (>1 = less overconfident)
+  lr: 0.001
+  weight_decay: 0.0001
+  epochs: 300
+  patience: 50
+
+train_gnn:
+  seed: 42
+  epochs: 200
+  lr: 0.001
+  weight_decay: 0.0001
+  val_frac: 0.2
+  test_frac: 0.2
