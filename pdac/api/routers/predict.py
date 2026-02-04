@@ -1,6 +1,10 @@
 from __future__ import annotations
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Response
+import os
+from pathlib import Path
+from pdac.api.core.config import get_cfg
+from pdac.api.services.uploadService import save_upload
 
 from pdac.api.core.config import get_cfg, artifacts_dir, fusion_graph_path, model_ckpt_path
 from pdac.api.services.uploadService import save_upload
@@ -12,7 +16,8 @@ from pdac.api.services.molParser import load_molecular_embedding_from_uploaded_t
 router = APIRouter()
 
 _cfg = get_cfg()
-_upload_dir = artifacts_dir(_cfg) / "uploads"
+_upload_dir = Path(os.getenv("UPLOAD_DIR", "/tmp/panoptic_uploads"))
+_upload_dir.mkdir(parents=True, exist_ok=True)
 
 _predictor = PredictorService(
     fusion_graph_pt=fusion_graph_path(_cfg),
