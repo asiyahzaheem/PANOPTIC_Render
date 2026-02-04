@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+from pdac.api.utils.artifacts import ensure_gdrive_file
 
 from pdac.api.core.config import (
     get_cfg,
@@ -31,6 +32,13 @@ def _load_embedder(cfg: dict, input_dim: int, device: torch.device) -> Molecular
         raise ValueError(
             f"Missing {ckpt_path}. Ensure molecular_embedder.pt is present (or downloaded at startup)."
         )
+
+    
+
+    FILE_ID = "1MrtrRjWYka9qdsu862mXPOvuErEtkuxL"
+    # before torch.load(...)
+    if not ckpt_path.exists():
+        ensure_gdrive_file(FILE_ID, ckpt_path)
 
     ckpt = torch.load(ckpt_path, map_location="cpu")
 
