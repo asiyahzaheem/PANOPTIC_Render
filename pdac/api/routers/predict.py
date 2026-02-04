@@ -43,6 +43,12 @@ async def predict(
         z_vec = extract_ct_embedding_single(ct_path, _cfg)
 
         result = _predictor.predict(z_vec=z_vec, emb_vec=emb_vec, explain=explain)
+        try:
+            ct_path.unlink(missing_ok=True)
+            mol_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+
         return result
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
