@@ -19,7 +19,4 @@ app.include_router(predict_router)
 # Google Drive file id for molecular_embedder.pt
 MOLECULAR_EMBEDDER_FILE_ID = os.getenv("MOLECULAR_EMBEDDER_FILE_ID", "1MrtrRjWYka9qdsu862mXPOvuErEtkuxL")
 
-@app.on_event("startup")
-def _startup_download():
-    # download into repo root to match your current layout
-    ensure_gdrive_file(MOLECULAR_EMBEDDER_FILE_ID, Path("molecular_embedder.pt"))
+
