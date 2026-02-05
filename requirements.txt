@@ -3,13 +3,11 @@ pandas
 fastapi
 uvicorn
 python-multipart
-torch-geometric
 tqdm
 scikit-learn
 nibabel
 SimpleITK
-torch
-torchvision
 pyyaml
 matplotlib
 gdown
+torch-geometric
