@@ -57,7 +57,7 @@ def extract_ct_embedding_single(ct_path: Path, cfg: dict) -> np.ndarray:
         ds,
         batch_size=1,
         shuffle=False,
-        num_workers=int(cfg["embeddings"]["num_workers"]),
+        num_workers=int(cfg.get("embeddings", {}).get("num_workers", 0)),
     )
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

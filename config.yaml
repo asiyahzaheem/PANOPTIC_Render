@@ -10,6 +10,9 @@ data:
   molecular_embedder_ckpt: "molecular_embedder.pt"          # will be downloaded to repo root (.)
   molecular_feature_cols_txt: "molecular_feature_cols.txt"
 
+embeddings:
+  num_workers: 0   # 0 = main process only (safe for Docker/server)
+
 preprocess:
   hu_min: -150
   hu_max: 250
