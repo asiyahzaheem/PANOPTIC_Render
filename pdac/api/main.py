@@ -53,6 +53,24 @@ def warmup():
         log.exception(f"Startup: predictor load FAILED: {e}")
         raise
 
+    log.info("Startup: pre-downloading molecular_embedder.pt (~116MB if missing)...")
+    try:
+        from pdac.api.services.molParser import _ensure_embedder_checkpoint_exists
+        _ensure_embedder_checkpoint_exists()
+        log.info("Startup: molecular_embedder ready OK")
+    except Exception as e:
+        log.exception(f"Startup: molecular_embedder FAILED: {e}")
+        raise
+
+    log.info("Startup: pre-loading ResNet18 (CT embedder, ~45MB download)...")
+    try:
+        from pdac.src.models.cnnBackbone import ResNet18Embedder
+        ResNet18Embedder()
+        log.info("Startup: ResNet18 loaded OK")
+    except Exception as e:
+        log.exception(f"Startup: ResNet18 load FAILED: {e}")
+        raise
+
 
 app.include_router(health_router)
 app.include_router(predict_router)
