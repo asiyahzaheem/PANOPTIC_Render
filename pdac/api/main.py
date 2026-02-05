@@ -1,7 +1,6 @@
 import logging
 import os
 from pathlib import Path
-
 from fastapi import FastAPI
 from pdac.api.core.cors import add_cors
 from pdac.api.routers.health import router as health_router
@@ -12,6 +11,12 @@ logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s %(message
 
 app = FastAPI(title="PANOPTIC PDAC API", version="1.0.0")
 add_cors(app)
+
+@app.on_event("startup")
+def warmup():
+    from pdac.api.routers.predict import get_predictor
+    get_predictor()  # force model load once
+
 
 app.include_router(health_router)
 app.include_router(predict_router)
