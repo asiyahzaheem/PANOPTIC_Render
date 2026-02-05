@@ -8,6 +8,23 @@ def health():
     return {"status": "ok"}
 
 
+@router.get("/info")
+def info():
+    """Quick reference: how to call /predict."""
+    return {
+        "predict": {
+            "method": "POST",
+            "url": "/predict",
+            "content_type": "multipart/form-data",
+            "required": ["ct_file (.nii/.nii.gz)", "molecular_file (.tsv)"],
+            "optional": ["explain (none|simple|detailed)"],
+            "curl": "curl -X POST <base_url>/predict -F ct_file=@scan.nii.gz -F molecular_file=@data.tsv -F explain=simple",
+        },
+        "health": {"method": "GET", "url": "/health"},
+        "debug": {"method": "GET", "url": "/debug"},
+    }
+
+
 @router.get("/debug")
 def debug():
     """Verify model and graph paths exist (confirms GNN is loaded)."""
