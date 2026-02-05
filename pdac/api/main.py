@@ -59,8 +59,10 @@ def warmup():
         _ensure_embedder_checkpoint_exists()
         log.info("Startup: molecular_embedder ready OK")
     except Exception as e:
-        log.exception(f"Startup: molecular_embedder FAILED: {e}")
-        raise
+        log.warning(
+            f"Startup: molecular_embedder pre-download failed (will retry on first predict): {e}. "
+            "If using gene/value TSV, ensure Google Drive file is shared 'Anyone with the link'."
+        )
 
     log.info("Startup: pre-loading ResNet18 (CT embedder, ~45MB download)...")
     try:
