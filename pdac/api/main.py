@@ -44,34 +44,19 @@ add_cors(app)
 
 @app.on_event("startup")
 def warmup():
-    log.info("Startup: loading predictor model...")
-    try:
-        from pdac.api.routers.predict import get_predictor
-        get_predictor()
-        log.info("Startup: predictor loaded OK")
-    except Exception as e:
-        log.exception(f"Startup: predictor load FAILED: {e}")
-        raise
-
-    log.info("Startup: pre-downloading molecular_embedder.pt (~116MB if missing)...")
+    # Do NOT load predictor or ResNet18 at startup — stay under 512MB.
+    # On each /predict we: load embedder -> embed TSV -> unload embedder -> load CT model -> load GNN.
+    log.info("Startup: pre-downloading molecular_embedder.pt only (~116MB if missing)...")
     try:
         from pdac.api.services.molParser import _ensure_embedder_checkpoint_exists
         _ensure_embedder_checkpoint_exists()
-        log.info("Startup: molecular_embedder ready OK")
+        log.info("Startup: molecular_embedder file ready OK")
     except Exception as e:
         log.warning(
             f"Startup: molecular_embedder pre-download failed (will retry on first predict): {e}. "
             "If using gene/value TSV, ensure Google Drive file is shared 'Anyone with the link'."
         )
-
-    log.info("Startup: pre-loading ResNet18 (CT embedder, ~45MB download)...")
-    try:
-        from pdac.src.models.cnnBackbone import ResNet18Embedder
-        ResNet18Embedder()
-        log.info("Startup: ResNet18 loaded OK")
-    except Exception as e:
-        log.exception(f"Startup: ResNet18 load FAILED: {e}")
-        raise
+    log.info("Startup: done (predictor and ResNet18 load on first /predict to save memory)")
 
 
 app.include_router(health_router)

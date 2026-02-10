@@ -1,15 +1,17 @@
 from __future__ import annotations
+import gc
 import logging
 import os
 import threading
 from pathlib import Path
 
+import torch
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 
 from pdac.api.core.config import get_cfg, fusion_graph_path, model_ckpt_path
 from pdac.api.schemas.predict import PredictResponse
 from pdac.api.services.ctEmbedder import extract_ct_embedding_single
-from pdac.api.services.molParser import load_molecular_embedding_from_uploaded_tsv
+from pdac.api.services.molParser import load_molecular_embedding_then_unload
 from pdac.api.services.predictorService import PredictorService
 from pdac.api.services.uploadService import save_upload
 
@@ -65,7 +67,6 @@ async def predict(
     explain: str = Form("simple", description="none|simple|detailed"),
 ):
     log.info("POST /predict started")
-    predictor = get_predictor()
     cfg = _cfg or get_cfg()
     try:
         log.info("Saving uploads...")
@@ -73,12 +74,20 @@ async def predict(
         mol_path = save_upload(_upload_dir, molecular_file)
         log.info(f"Saved: ct={ct_path.name} mol={mol_path.name}")
 
-        log.info("Loading molecular embedding...")
-        emb_vec = load_molecular_embedding_from_uploaded_tsv(mol_path, cfg)
+        # 1) Load only molecular embedder, get embedding, then unload to free memory
+        log.info("Loading molecular embedding (then unloading embedder)...")
+        emb_vec = load_molecular_embedding_then_unload(mol_path, cfg)
+
+        # 2) Load ResNet18 for CT (used inside, then freed when function returns)
         log.info("Extracting CT embedding...")
         z_vec = extract_ct_embedding_single(ct_path, cfg)
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
 
+        # 3) Load GNN predictor and run (predictor kept for possible reuse)
         log.info("Running prediction...")
+        predictor = get_predictor()
         result = predictor.predict(z_vec=z_vec, emb_vec=emb_vec, explain=explain)
         try:
             ct_path.unlink(missing_ok=True)

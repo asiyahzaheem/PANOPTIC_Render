@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import gc
 import os
 import threading
 import numpy as np
@@ -124,6 +125,51 @@ def _load_embedder(cfg: dict, input_dim: int, device: torch.device) -> Molecular
 
         _EMBEDDER_CACHE[cache_key] = model
         return model
+
+
+def unload_molecular_embedder() -> None:
+    """
+    Clear the molecular embedder cache and free memory.
+    Call after getting embedding from gene/value TSV so other models can load.
+    """
+    with _CACHE_LOCK:
+        _EMBEDDER_CACHE.clear()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
+
+
+@torch.no_grad()
+def load_molecular_embedding_then_unload(tsv_path: Path, cfg: dict | None = None) -> np.ndarray:
+    """
+    Get molecular embedding (256,) from TSV, then unload the embedder to free memory.
+    Use this when memory is tight: embedder is loaded only for this call, then freed.
+    - If TSV has emb_0..emb_255: parses directly, no model loaded.
+    - If TSV has gene/value: loads embedder, embeds, unloads embedder, returns.
+    """
+    if cfg is None:
+        cfg = get_cfg()
+
+    df = pd.read_csv(tsv_path, sep="\t")
+    if len(df) < 1:
+        raise ValueError("Uploaded molecular TSV is empty.")
+
+    # Case 1: embedding TSV — no model needed
+    if any(c.startswith("emb_") for c in df.columns):
+        return _parse_embedding_tsv(df)
+
+    # Case 2: gene/value — load embedder, embed, then unload to free memory
+    feature_cols = _load_feature_cols(cfg)
+    x_expr = _parse_expression_gene_value_tsv(df, feature_cols)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = _load_embedder(cfg, input_dim=len(feature_cols), device=device)
+
+    x = torch.tensor(x_expr, dtype=torch.float32, device=device).unsqueeze(0)  # [1, D]
+    emb = model(x)[0].detach().cpu().numpy().astype(np.float32)  # [256]
+
+    unload_molecular_embedder()
+    return emb
 
 
 @torch.no_grad()
